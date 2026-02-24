@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>Health Tracker (Offline)</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- MAIN (Daily Log) -->
+  <div id="view-main" class="view view-active">
+    <header class="appbar">
+      <div class="appbar-title">Health Tracker</div>
+      <button class="btn btn-save" id="btnSaveTop" type="button">
+        <span class="ico">💾</span><span>Save</span>
+      </button>
+    </header>
+
+    <main class="page">
+      <!-- Date row -->
+      <section class="date-row card-lite">
+        <button class="icon-btn" id="btnPrevDay" type="button" aria-label="Previous day">‹</button>
+        <button class="date-pill" id="btnPickDate" type="button" aria-label="Pick date">
+          <span class="ico">📅</span>
+          <span id="dateLabel">Thursday, Feb 12, 2026</span>
+        </button>
+        <button class="icon-btn" id="btnNextDay" type="button" aria-label="Next day">›</button>
+
+        <!-- hidden real input for date picker -->
+        <input type="date" id="logDate" class="sr-only" />
+      </section>
+
+      <!-- Summary cards -->
+      <section class="summary">
+        <div class="summary-card green">
+          <div class="summary-num" id="sumSupp">0</div>
+          <div class="summary-label">Supplements</div>
+        </div>
+        <div class="summary-card blue">
+          <div class="summary-num" id="sumEx">0</div>
+          <div class="summary-label">Exercises</div>
+        </div>
+        <div class="summary-card red">
+          <div class="summary-num" id="sumFast">--</div>
+          <div class="summary-label">Fasting</div>
+        </div>
+      </section>
+
+      <!-- Blood sugar -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="icon-badge pink">🩸</div>
+          <div class="section-title">Blood Sugar Readings</div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">FASTING BLOOD SUGAR</div>
+          <div class="field-row">
+            <input class="input" type="number" step="0.1" inputmode="decimal" id="fastingBloodSugar" placeholder="Enter value" />
+            <div class="unit">mmol/L</div>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">PRE-DINNER SUGAR</div>
+          <div class="field-row">
+            <input class="input" type="number" step="0.1" inputmode="decimal" id="preDinnerSugar" placeholder="Enter value" />
+            <div class="unit">mmol/L</div>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">2HR POST-DINNER SUGAR</div>
+          <div class="field-row">
+            <input class="input" type="number" step="0.1" inputmode="decimal" id="postDinnerSugar" placeholder="Enter value" />
+            <div class="unit">mmol/L</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fasting status -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="icon-badge amber">⏱️</div>
+          <div class="section-title">Fasting Status</div>
+        </div>
+
+        <div class="pill-grid">
+          <label class="pill-check">
+            <input type="checkbox" id="fasted" />
+            <span class="box"></span>
+            <span>Fasted</span>
+          </label>
+          <label class="pill-check">
+            <input type="checkbox" id="waterFasted" />
+            <span class="box"></span>
+            <span>Water Fasted</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Supplements -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="icon-badge green">💊</div>
+          <div class="section-title">Daily Supplements</div>
+        </div>
+
+        <div class="subhead">MORNING</div>
+        <div class="list" id="suppMorning"></div>
+
+        <div class="subhead">AFTERNOON</div>
+        <div class="list" id="suppAfternoon"></div>
+
+        <div class="subhead">EVENING</div>
+        <div class="list" id="suppEvening"></div>
+
+        <div class="subhead">CUSTOM VITAMIN</div>
+        <div class="field-card">
+          <input class="input" type="text" id="customVitaminName" placeholder="Enter vitamin name..." />
+        </div>
+        <label class="list-item">
+          <input type="checkbox" id="customVitaminTaken" />
+          <span class="cb"></span>
+          <span class="li-text">Custom vitamin taken</span>
+        </label>
+      </section>
+
+      <!-- Exercise -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="icon-badge blue">🏃</div>
+          <div class="section-title">Daily Exercise</div>
+        </div>
+        <div class="list" id="exerciseChecks"></div>
+      </section>
+
+      <!-- Measurements -->
+      <section class="section-card">
+        <div class="section-head row-between">
+          <div class="row">
+            <div class="icon-badge purple">📈</div>
+            <div class="section-title">Health Measurements</div>
+          </div>
+          <div class="freq-wrap">
+            <select class="select-mini" id="measureFreq" aria-label="Frequency">
+              <option value="daily">Daily</option>
+              <option value="weekly">Every 7 Days</option>
+              <option value="custom">Custom interval</option>
+            </select>
+            <div class="freq-custom" id="freqCustomWrap" style="display:none">
+              <input class="input input-mini" type="number" min="2" step="1" inputmode="numeric" id="measureInterval" value="7" />
+              <span class="unit unit-mini">days</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="measure-locked" id="measureLocked" style="display:none">Measurements are locked for this date (interval mode). Switch to <b>Daily</b> to edit today.</div>
+        <div id="measureBody">
+        <div class="measure-grid">
+          <div class="mini-card">
+            <div class="mini-label">WAIST SIZE</div>
+            <div class="mini-row">
+              <input class="input" type="number" step="0.1" inputmode="decimal" id="waistSize" value="" />
+              <div class="unit">cm</div>
+            </div>
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-label">WEIGHT</div>
+            <div class="mini-row">
+              <input class="input" type="number" step="0.1" inputmode="decimal" id="weight" value="" />
+              <div class="unit">kg</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">BODY FAT %</div>
+          <div class="field-row">
+            <input class="input" type="number" step="0.1" inputmode="decimal" id="fatPercentage" />
+            <div class="unit">%</div>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">BLOOD PRESSURE</div>
+          <div class="bp-row">
+            <input class="input" type="number" step="1" inputmode="numeric" id="bpSystolic" placeholder="120" />
+            <div class="slash">/</div>
+            <input class="input" type="number" step="1" inputmode="numeric" id="bpDiastolic" placeholder="80" />
+            <div class="unit">mmHg</div>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-label">GRIP STRENGTH</div>
+          <div class="grip-row">
+            <div class="grip-col">
+              <div class="mini-muted">Left</div>
+              <div class="field-row">
+                <input class="input" type="number" step="0.1" inputmode="decimal" id="gripLeft" />
+                <div class="unit">kg</div>
+              </div>
+            </div>
+            <div class="grip-col">
+              <div class="mini-muted">Right</div>
+              <div class="field-row">
+                <input class="input" type="number" step="0.1" inputmode="decimal" id="gripRight" />
+                <div class="unit">kg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      
+      <!-- Meals -->
+      <section class="section-card">
+        <div class="section-head">Meals</div>
+        <div class="grid-2">
+
+          <div class="field-card">
+            <div class="field-title">Breakfast</div>
+            <input class="input" type="time" id="mealBreakfastTime">
+            <input class="input" placeholder="What did you eat?" id="mealBreakfast">
+          </div>
+
+          <div class="field-card">
+            <div class="field-title">Lunch</div>
+            <input class="input" type="time" id="mealLunchTime">
+            <input class="input" placeholder="What did you eat?" id="mealLunch">
+          </div>
+
+          <div class="field-card">
+            <div class="field-title">Dinner</div>
+            <input class="input" type="time" id="mealDinnerTime">
+            <input class="input" placeholder="What did you eat?" id="mealDinner">
+          </div>
+
+          <div class="field-card">
+            <div class="field-title">Notes</div>
+            <textarea class="input" id="dailyNotes" placeholder="Notes..."></textarea>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- Data management -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="icon-badge indigo">🗂️</div>
+          <div class="section-title">Data Management</div>
+        </div>
+
+        <button class="big-action" id="btnExportJSON" type="button">⬇️&nbsp;&nbsp;Export as JSON</button>
+        <button class="big-action" id="btnExportCSV" type="button">⬇️&nbsp;&nbsp;Export as CSV</button>
+
+        <label class="big-action filepick">
+          ⬆️&nbsp;&nbsp;Import JSON
+          <input type="file" id="importFile" accept="application/json,.json" />
+        </label>
+        <button class="big-action" id="btnImport" type="button">⬆️&nbsp;&nbsp;Import Selected JSON</button>
+
+        <label class="big-action filepick">⬆️&nbsp;&nbsp;Import CSV<input type="file" id="importCSVFile" accept=".csv,text/csv" /></label>
+        <button class="big-action" id="btnImportCSV" type="button">⬆️&nbsp;&nbsp;Import Selected CSV</button>
+        <label class="checkbox-row" style="margin-top:10px">
+          <input type="checkbox" id="importEmptyRows">
+          <span>Import empty rows as blank days</span>
+        </label>
+
+        <button class="big-action" id="btnViewCharts" type="button">📊&nbsp;&nbsp;View Charts</button>
+
+        <button class="big-action" id="btnClearRangeOpen" type="button">🗑️&nbsp;&nbsp;Clear Data (Date Range)</button>
+
+        <div class="danger-row">
+          <div class="danger-box">
+            <div class="danger-left">
+              <div class="danger-title">🗑️&nbsp;&nbsp;Clear All Data</div>
+              <div class="danger-sub">This cannot be undone.</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleClearAll" />
+              <span class="track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="records" id="recordCount">0 records stored</div>
+        <div class="records" id="recordRange">No data yet</div>
+      </section>
+
+      <div class="footer-note">Fully offline • Data stays on this device (IndexedDB)</div>
+    </main>
+
+    <!-- Date range modal -->
+    <div class="modal" id="modalRange" aria-hidden="true">
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card">
+        <div class="modal-title">Clear Data (Date Range)</div>
+        <div class="modal-body">
+          <label class="modal-field">
+            <span>From</span>
+            <input type="date" id="clearFrom" />
+          </label>
+          <label class="modal-field">
+            <span>To</span>
+            <input type="date" id="clearTo" />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="btnCancelRange" type="button">Cancel</button>
+          <button class="btn btn-danger" id="btnClearRange" type="button">Clear Range</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS VIEW -->
+  <div id="view-charts" class="view">
+    <header class="appbar chartsbar">
+      <button class="icon-btn" id="btnBackFromCharts" type="button" aria-label="Back">←</button>
+      <div class="appbar-title">Health Charts</div>
+      <div style="width:64px"></div>
+    </header>
+
+    <main class="page">
+      <div class="chiprow" id="chartChips">
+        <button class="chip active" data-chart="sugar">🩸&nbsp;Blood Sugar</button>
+        <button class="chip" data-chart="weightfat">⚖️&nbsp;Weight & Body</button>
+        <button class="chip" data-chart="waist">📏&nbsp;Waist Size</button>
+        <button class="chip" data-chart="bp">❤️&nbsp;Blood Pressure</button>
+        <button class="chip" data-chart="grip">✊&nbsp;Grip Strength</button>
+        <button class="chip" data-chart="activity">✅&nbsp;Activity</button>
+      </div>
+
+      <section class="section-card" id="chartCard">
+        <div class="section-head" id="chartTitleWrap">
+          <div class="icon-badge pink" id="chartIcon">🩸</div>
+          <div class="section-title" id="chartTitle">Blood Sugar</div>
+        </div>
+
+        <div class="chartwrap">
+          <canvas id="chartCanvas" width="920" height="420"></canvas>
+        </div>
+        <div class="legend" id="chartLegend"></div>
+        <div class="empty" id="chartEmpty">No data yet. Start logging to see charts!</div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
